@@ -4,12 +4,11 @@ This repository contains my implementation of the ideas presented in the article
 
 # Results
 
-- **Reproduced and extended** a top-cited scientific method ([200+ citations](https://arxiv.org/abs/1911.09107)) for training neural networks directly on the Sharpe Ratio, adapting it to a multi-asset mid-frequency trading (MFT) strategy over the S&P 500.
-- **Engineered a DL-driven trading strategy** that achieved **+176% total return** with **Sharpe Ratio 11.6** on 2025 out-of-sample data, demonstrating strong alpha under realistic fee assumptions.
-- **Resolved optimization collapse** in Sharpe-based training by introducing a **novel multi-stage loss schedule** (*Sharpe → Sharpe-PnL → PnL*), achieving a **3× improvement in PnL** without Sharpe degradation.
-- **Designed and deployed a robust training pipeline** for time-series asset data, including a **200× speed-up** in feature processing via offset-mapped caching and efficient batching for API-constrained environments.
-- **Explored future extensions** of the strategy, including constraint adaptation, stacked modeling, and forecast-aware regularization, laying groundwork for production-level improvements.
-- **Submitted a project proposal for academic publication** to the Head of AI in Mathematical Finance at HSE University, positioning the work for potential research collaboration.
+- **Reproduced and extended** the method of [Zhang, Zohren & Roberts](https://arxiv.org/abs/2005.13665) for training neural networks directly on the Sharpe ratio net of transaction costs, moving it from daily data to a multi-asset **mid-frequency trading (MFT)** setting: two years of minute-level data for 488 S&P 500 stocks.
+- **Resolved optimization collapse** in Sharpe-based training with a staged loss schedule (*Sharpe → Sharpe-PnL → PnL*), which improved backtest PnL by roughly **3×** on the chronological holdout without degrading Sharpe.
+- **Built the training pipeline** for minute-level multi-asset data, including a **~200× speed-up** in data loading through offset-indexed CSV chunk reading and chunked loss evaluation.
+- **Evaluated on a chronological holdout** (train July 2023 – December 2024, test January – July 2025) under a simplified proportional fee of 1.53 bp of traded volume. Bid–ask spreads, market impact and borrow costs are **not** modeled, and the best models concentrate in a small number of assets, so the backtest curves below are an exploratory check of the training procedure, not an estimate of achievable live performance.
+- **Documented next steps**: position and turnover constraints, stacking of strategies, and MSE pretraining before Sharpe fine-tuning.
 
 # Original Article
 
@@ -20,7 +19,7 @@ Using 14 years of daily candle data and a fee level of `1e-4`, the authors devel
 Their strategy achieved a Sharpe ratio of **1.96**, compared to the market Sharpe of **1.52** over the same period.
 
 I found the idea very interesting, and since no public code implementation was available, I decided to build it myself. I also explored how this approach would work in a different setting — **mid-frequency trading** (MFT).  
-I was curious to see what kinds of strategies the neural network would converge to, and under what transaction cost regimes. The results exceeded my expectations, and I’m considering turning this into a publication or using it as part of my Bachelor's thesis.
+I was curious to see what kinds of strategies the neural network would converge to, and under what transaction cost regimes. This was my summer research practice at HSE University (July–August 2025).
 
 # My Case & Adaptations
 
@@ -319,6 +318,8 @@ def get_asset_specific_features(self):
 These features are used as the `asset_features` input in architectures like `DeepPortfolioAllocator`, where each asset is processed with its own features and combined with global context.
 
 # PnL on Test Set (2025)
+
+> **Caveat.** All curves use the simplified volume-proportional fee only. Spreads, market impact and borrow costs are not modeled, and several runs concentrate in one or two assets, so these are diagnostics of the optimization behaviour rather than performance claims.
 
 Due to notebook saving issues, the PnL plots are currently messy (e.g., X-axis shows numeric indices instead of dates). I plan to rerun the experiments and replace the current images with cleaner versions in the future.
 
